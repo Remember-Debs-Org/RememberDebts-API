@@ -57,11 +57,11 @@ public class Deuda {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDate fechaCreacion;
 
-    @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Pago> pagos = new ArrayList<>();
-
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDate.now();
     }
+
+    @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Pago> pagos = new ArrayList<>();
 }
