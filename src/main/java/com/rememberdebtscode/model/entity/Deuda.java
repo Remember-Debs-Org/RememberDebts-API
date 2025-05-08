@@ -25,11 +25,12 @@ public class Deuda {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Usuario user;
 
     @Column(name = "nombre", nullable = false)
     private String nombre;
 
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private CategoriaDeuda categoria;

@@ -1,11 +1,19 @@
 package com.rememberdebtscode.model.entity;
 
-import com.rememberdebtscode.model.enums.EstadoUsuario;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -17,42 +25,16 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "user_nombre", nullable = false)
-    private String firstName;
-
-    @Column(name = "user_apellido", nullable = false)
-    private String lastName;
-
     @Column(name = "user_email", nullable = false, unique = true, updatable = false)
     private String userEmail;
 
     @Column(name = "user_password", nullable = false)
     private String userPassword;
 
-    @Column(name = "user_telefono")
-    private String userTelefono;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Usuario usuario;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDate createAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.createAt = LocalDate.now();
-    }
-
-    @Column(name = "update_at")
-    private LocalDate updateAt;
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updateAt = LocalDate.now();
-    }
-
-    @Column(name = "deleted_at")
-    private LocalDate deletedAt;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "estado_usuario", nullable = false)
-    private EstadoUsuario estado;
-
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", referencedColumnName = "id")
+    private Role role;
 }
