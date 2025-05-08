@@ -25,11 +25,12 @@ public class Deuda {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Usuario user;
 
     @Column(name = "nombre", nullable = false)
     private String nombre;
 
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private CategoriaDeuda categoria;
@@ -57,11 +58,11 @@ public class Deuda {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDate fechaCreacion;
 
-    @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Pago> pagos = new ArrayList<>();
-
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDate.now();
     }
+
+    @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Pago> pagos = new ArrayList<>();
 }
