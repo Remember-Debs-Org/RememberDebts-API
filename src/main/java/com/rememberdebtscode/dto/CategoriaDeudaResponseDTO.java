@@ -7,5 +7,4 @@ public class CategoriaDeudaResponseDTO {
 
     private Integer id;
     private String nombre;
-    private String imagenUrl;
 }

@@ -18,11 +18,12 @@ public class CategoriaDeuda {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "nombre", nullable = false, unique = true)
+    @Column(name = "nombre", nullable = false)
     private String nombre;
 
-    @Column(name = "imagen_url")
-    private String imagenUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private User user;
 
     @OneToMany(mappedBy = "categoria")
     private List<Deuda> deudas = new ArrayList<>();

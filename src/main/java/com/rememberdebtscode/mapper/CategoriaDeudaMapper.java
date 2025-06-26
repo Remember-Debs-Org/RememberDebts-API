@@ -15,7 +15,6 @@ public class CategoriaDeudaMapper {
         }
         CategoriaDeuda categoria = new CategoriaDeuda();
         categoria.setNombre(dto.getNombre());
-        categoria.setImagenUrl(dto.getImagenUrl());
         return categoria;
     }
 
@@ -27,7 +26,6 @@ public class CategoriaDeudaMapper {
         CategoriaDeudaResponseDTO dto = new CategoriaDeudaResponseDTO();
         dto.setId(categoria.getId());
         dto.setNombre(categoria.getNombre());
-        dto.setImagenUrl(categoria.getImagenUrl());
         return dto;
     }
 
@@ -37,6 +35,5 @@ public class CategoriaDeudaMapper {
             return;
         }
         categoria.setNombre(dto.getNombre());
-        categoria.setImagenUrl(dto.getImagenUrl());
     }
 }
