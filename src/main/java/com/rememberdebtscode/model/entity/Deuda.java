@@ -41,8 +41,14 @@ public class Deuda {
     @Column(name = "monto", nullable = false)
     private Double monto;
 
-    @Column(name = "fecha_vencimiento", nullable = false)
-    private LocalDate fechaVencimiento;
+    @Column(name = "fecha_limite_pago")
+    private LocalDate fechaLimitePago;      // Para deudas pendientes
+
+    @Column(name = "fecha_pago")
+    private LocalDate fechaPago;            // Para deudas pagadas
+
+    @Column(name = "fecha_vencimiento")
+    private LocalDate fechaVencimiento;     // Para deudas vencidas
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)

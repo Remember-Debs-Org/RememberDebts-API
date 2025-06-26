@@ -10,33 +10,26 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DeudaMapper {
 
-    /**
-     * Convierte DeudaRequestDTO a entidad Deuda.
-     * No asigna usuario ni categoría, eso debe hacerlo el servicio.
-     */
     public Deuda toEntity(DeudaRequestDTO dto) {
-        if (dto == null)
-            return null;
+        if (dto == null) return null;
 
         Deuda deuda = new Deuda();
         deuda.setNombre(dto.getNombre());
         deuda.setDescripcion(dto.getDescripcion());
         deuda.setMonto(dto.getMonto());
-        deuda.setFechaVencimiento(dto.getFechaVencimiento());
         deuda.setEstado(dto.getEstado());
         deuda.setRecurrente(dto.getRecurrente());
         deuda.setFrecuencia(dto.getFrecuencia());
 
+        deuda.setFechaLimitePago(dto.getFechaLimitePago());
+        deuda.setFechaPago(dto.getFechaPago());
+        deuda.setFechaVencimiento(dto.getFechaVencimiento());
+
         return deuda;
     }
 
-    /**
-     * Convierte entidad Deuda a DeudaResponseDTO.
-     * Asigna nombre de categoría y usuario.
-     */
     public DeudaResponseDTO toDto(Deuda deuda) {
-        if (deuda == null)
-            return null;
+        if (deuda == null) return null;
 
         DeudaResponseDTO dto = new DeudaResponseDTO();
         dto.setId(deuda.getId());
@@ -45,10 +38,14 @@ public class DeudaMapper {
         dto.setCategoriaNombre(deuda.getCategoria() != null ? deuda.getCategoria().getNombre() : null);
         dto.setDescripcion(deuda.getDescripcion());
         dto.setMonto(deuda.getMonto());
-        dto.setFechaVencimiento(deuda.getFechaVencimiento());
         dto.setEstado(deuda.getEstado());
         dto.setRecurrente(deuda.getRecurrente());
         dto.setFrecuencia(deuda.getFrecuencia());
+
+        dto.setFechaLimitePago(deuda.getFechaLimitePago());
+        dto.setFechaPago(deuda.getFechaPago());
+        dto.setFechaVencimiento(deuda.getFechaVencimiento());
+
         dto.setFechaCreacion(deuda.getFechaCreacion());
 
         return dto;

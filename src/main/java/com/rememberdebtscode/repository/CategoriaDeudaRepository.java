@@ -12,4 +12,5 @@ public interface CategoriaDeudaRepository extends JpaRepository<CategoriaDeuda, 
     Optional<CategoriaDeuda> findByNombre(String nombre);
     List<CategoriaDeuda> findByUser(User user);
     Optional<CategoriaDeuda> findByNombreAndUser(String nombre, User user);
+    Optional<CategoriaDeuda> findByNombreAndUserId(String nombre, Integer userId);
 }

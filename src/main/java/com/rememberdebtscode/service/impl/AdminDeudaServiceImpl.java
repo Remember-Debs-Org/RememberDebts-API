@@ -6,6 +6,7 @@ import com.rememberdebtscode.mapper.DeudaMapper;
 import com.rememberdebtscode.model.entity.CategoriaDeuda;
 import com.rememberdebtscode.model.entity.Deuda;
 import com.rememberdebtscode.model.entity.Usuario;
+import com.rememberdebtscode.model.enums.EstadoDeuda;
 import com.rememberdebtscode.repository.CategoriaDeudaRepository;
 import com.rememberdebtscode.repository.DeudaRepository;
 import com.rememberdebtscode.repository.UsuarioRepository;
@@ -73,27 +74,22 @@ public class AdminDeudaServiceImpl implements AdminDeudaService {
     @Transactional
     @Override
     public DeudaResponseDTO create(DeudaRequestDTO dto) {
-        if (dto.getFechaVencimiento() != null && dto.getFechaVencimiento().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha de vencimiento no puede ser anterior a hoy");
-        }
+        validarFechasSegunEstado(dto);
 
-        // 1. Buscar la categoría
-        CategoriaDeuda categoria = categoriaDeudaRepository.findByNombre(dto.getCategoriaNombre())
-                .orElseThrow(
-                        () -> new RuntimeException("Categoría no encontrada con nombre: " + dto.getCategoriaNombre()));
+        // Buscar categoría, EXIGIENDO que pertenezca al usuario
+        CategoriaDeuda categoria = categoriaDeudaRepository
+            .findByNombreAndUserId(dto.getCategoriaNombre(), dto.getUserId())
+            .orElseThrow(() -> new RuntimeException("La categoría no existe o no pertenece al usuario"));
 
-        // 2. Buscar el usuario
         Usuario user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + dto.getUserId()));
 
-        // 3. Convertir DTO a entidad
+        // Mapear DTO a entidad y setear usuario/categoría
         Deuda deuda = deudaMapper.toEntity(dto);
-
-        // 4. Asignar la categoría y el usuario
         deuda.setCategoria(categoria);
         deuda.setUser(user);
 
-        // 5. Guardar y devolver
+        // Guardar y devolver
         Deuda saved = deudaRepository.save(deuda);
         return deudaMapper.toDto(saved);
     }
@@ -101,26 +97,26 @@ public class AdminDeudaServiceImpl implements AdminDeudaService {
     @Transactional
     @Override
     public DeudaResponseDTO update(Integer id, DeudaRequestDTO dto) {
+        validarFechasSegunEstado(dto);
+
         Deuda deudaExistente = deudaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Deuda no encontrada con id: " + id));
-
-        // Validar fecha de vencimiento
-        if (dto.getFechaVencimiento() != null && dto.getFechaVencimiento().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha de vencimiento no puede ser anterior a hoy");
-        }
 
         deudaExistente.setNombre(dto.getNombre());
         deudaExistente.setDescripcion(dto.getDescripcion());
         deudaExistente.setMonto(dto.getMonto());
-        deudaExistente.setFechaVencimiento(dto.getFechaVencimiento());
         deudaExistente.setEstado(dto.getEstado());
         deudaExistente.setRecurrente(dto.getRecurrente());
         deudaExistente.setFrecuencia(dto.getFrecuencia());
 
-        // Validar y asignar categoría obligatoria por nombre
-        CategoriaDeuda categoria = categoriaDeudaRepository.findByNombre(dto.getCategoriaNombre())
-                .orElseThrow(
-                        () -> new RuntimeException("Categoría no encontrada con nombre: " + dto.getCategoriaNombre()));
+        // Fechas
+        deudaExistente.setFechaLimitePago(dto.getFechaLimitePago());
+        deudaExistente.setFechaPago(dto.getFechaPago());
+        deudaExistente.setFechaVencimiento(dto.getFechaVencimiento());
+
+        CategoriaDeuda categoria = categoriaDeudaRepository
+            .findByNombreAndUserId(dto.getCategoriaNombre(), dto.getUserId())
+            .orElseThrow(() -> new RuntimeException("La categoría no existe o no pertenece al usuario"));
         deudaExistente.setCategoria(categoria);
 
         Deuda updated = deudaRepository.save(deudaExistente);
@@ -133,5 +129,53 @@ public class AdminDeudaServiceImpl implements AdminDeudaService {
         Deuda deudaExistente = deudaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Deuda no encontrada con id: " + id));
         deudaRepository.delete(deudaExistente);
+    }
+
+    private void validarFechasSegunEstado(DeudaRequestDTO dto) {
+        EstadoDeuda estado = dto.getEstado();
+        boolean rec = Boolean.TRUE.equals(dto.getRecurrente());
+        LocalDate hoy = LocalDate.now();
+
+        if (estado == EstadoDeuda.PENDIENTE) {
+            if (dto.getFechaLimitePago() == null)
+                throw new IllegalArgumentException("La fecha límite de pago es obligatoria para deudas pendientes.");
+            if (dto.getFechaPago() != null || dto.getFechaVencimiento() != null)
+                throw new IllegalArgumentException("No debe establecer fecha de pago ni de vencimiento para deudas pendientes.");
+            // Opcional: No permitir fechas límite pasadas
+            if (dto.getFechaLimitePago().isBefore(hoy))
+                throw new IllegalArgumentException("La fecha límite de pago no puede ser anterior a hoy para deudas pendientes.");
+        }
+        else if (estado == EstadoDeuda.PAGADA) {
+            if (dto.getFechaPago() == null)
+                throw new IllegalArgumentException("La fecha de pago es obligatoria para deudas pagadas.");
+            if (dto.getFechaLimitePago() != null && !rec)
+                throw new IllegalArgumentException("No debe establecer fecha límite para deudas pagadas no recurrentes.");
+            if (dto.getFechaVencimiento() != null)
+                throw new IllegalArgumentException("No debe establecer fecha de vencimiento para deudas pagadas.");
+            // 🔴 NUEVO: fechaPago no puede ser futura
+            if (dto.getFechaPago().isAfter(hoy))
+                throw new IllegalArgumentException("La fecha de pago no puede ser posterior a hoy para deudas pagadas.");
+            if (rec && (dto.getFechaLimitePago() == null))
+                throw new IllegalArgumentException("La fecha límite de pago es obligatoria para deudas pagadas recurrentes.");
+            if (rec && dto.getFrecuencia() == null)
+                throw new IllegalArgumentException("Debe especificar la frecuencia si la deuda es recurrente.");
+            if (!rec && dto.getFrecuencia() != null)
+                throw new IllegalArgumentException("No debe especificar frecuencia si la deuda no es recurrente.");
+        }
+        else if (estado == EstadoDeuda.VENCIDA) {
+            if (dto.getFechaVencimiento() == null)
+                throw new IllegalArgumentException("La fecha de vencimiento es obligatoria para deudas vencidas.");
+            if (dto.getFechaPago() != null)
+                throw new IllegalArgumentException("No debe establecer fecha de pago para deudas vencidas.");
+            // 🔴 NUEVO: fechaVencimiento no puede ser futura
+            if (dto.getFechaVencimiento().isAfter(hoy))
+                throw new IllegalArgumentException("La fecha de vencimiento no puede ser posterior a hoy para una deuda vencida.");
+            if (rec && (dto.getFechaLimitePago() == null))
+                throw new IllegalArgumentException("La fecha límite de pago es obligatoria para deudas vencidas recurrentes.");
+            if (rec && dto.getFrecuencia() == null)
+                throw new IllegalArgumentException("Debe especificar la frecuencia si la deuda es recurrente.");
+            if (!rec && dto.getFrecuencia() != null)
+                throw new IllegalArgumentException("No debe especificar frecuencia si la deuda no es recurrente.");
+        }
     }
 }

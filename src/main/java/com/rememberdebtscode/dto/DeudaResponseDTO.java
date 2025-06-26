@@ -14,9 +14,11 @@ public class DeudaResponseDTO {
     private String categoriaNombre;
     private String descripcion;
     private Double monto;
-    private LocalDate fechaVencimiento;
     private EstadoDeuda estado;
     private Boolean recurrente;
     private FrecuenciaDeuda frecuencia;
+    private LocalDate fechaLimitePago;
+    private LocalDate fechaPago;
+    private LocalDate fechaVencimiento;
     private LocalDate fechaCreacion;
 }
