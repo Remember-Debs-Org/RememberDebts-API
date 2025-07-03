@@ -18,7 +18,7 @@ public class PagoMapper {
         pago.setFechaPago(dto.getFechaPago());
         pago.setMontoPagado(dto.getMontoPagado());
         pago.setNotas(dto.getNotas());
-
+        // NO se asigna el comprobante aquí (es gestionado en el service al guardar archivo)
         return pago;
     }
 
@@ -33,7 +33,7 @@ public class PagoMapper {
         dto.setMontoPagado(pago.getMontoPagado());
         dto.setNotas(pago.getNotas());
         dto.setFechaRegistro(pago.getFechaRegistro());
-
+        dto.setComprobanteUrl(pago.getComprobanteUrl()); // NUEVO: añadir comprobante
         return dto;
     }
 }

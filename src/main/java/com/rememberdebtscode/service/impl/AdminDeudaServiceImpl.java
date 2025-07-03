@@ -62,9 +62,9 @@ public class AdminDeudaServiceImpl implements AdminDeudaService {
         return deudaMapper.toDto(deuda);
     }
 
-    @Transactional(readOnly = true)
     @Override
     public List<DeudaResponseDTO> findByUserId(Integer userId) {
+        renovarCiclosRecurrentes(); // <-- Aquí invocas la renovación
         List<Deuda> deudas = deudaRepository.findByUserId(userId);
         return deudas.stream()
                 .map(deudaMapper::toDto)
@@ -178,4 +178,40 @@ public class AdminDeudaServiceImpl implements AdminDeudaService {
                 throw new IllegalArgumentException("No debe especificar frecuencia si la deuda no es recurrente.");
         }
     }
+
+    // Método para actualizar deudas vencidas
+    private void verificarVencimientos() {
+        List<Deuda> deudasPendientes = deudaRepository.findByEstado(EstadoDeuda.PENDIENTE);
+        LocalDate hoy = LocalDate.now();
+        for (Deuda d : deudasPendientes) {
+            if (d.getFechaLimitePago() != null && d.getFechaLimitePago().isBefore(hoy)) {
+                d.setEstado(EstadoDeuda.VENCIDA);
+                deudaRepository.save(d);
+            }
+        }
+    }
+
+    @Transactional
+    public void renovarCiclosRecurrentes() {
+        List<Deuda> deudasPagadasRec = deudaRepository.findByEstadoAndRecurrente(EstadoDeuda.PAGADA, true);
+        LocalDate hoy = LocalDate.now();
+        for (Deuda d : deudasPagadasRec) {
+            // Solo si la fecha límite actual ya pasó y estamos en el siguiente ciclo
+            LocalDate siguienteFechaLimite = null;
+            if (d.getFrecuencia() != null && d.getFechaLimitePago() != null) {
+                switch (d.getFrecuencia()) {
+                    case MENSUAL -> siguienteFechaLimite = d.getFechaLimitePago().plusMonths(1);
+                    case TRIMESTRAL -> siguienteFechaLimite = d.getFechaLimitePago().plusMonths(3);
+                }
+                // Si ya estamos en o después de la siguiente fecha límite
+                if (siguienteFechaLimite != null && !hoy.isBefore(siguienteFechaLimite)) {
+                    d.setEstado(EstadoDeuda.PENDIENTE);
+                    d.setFechaLimitePago(siguienteFechaLimite);
+                    d.setFechaPago(null);
+                    deudaRepository.save(d);
+                }
+            }
+        }
+    }
+
 }

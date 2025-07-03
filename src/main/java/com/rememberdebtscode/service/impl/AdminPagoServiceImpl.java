@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -53,17 +54,44 @@ public class AdminPagoServiceImpl implements AdminPagoService {
 
     @Transactional
     @Override
-    public PagoResponseDTO create(PagoRequestDTO dto) {
-        // Validar y cargar deuda
+    public PagoResponseDTO create(PagoRequestDTO dto, MultipartFile comprobante) {
+        // 1. Obtener la deuda
         var deuda = deudaRepository.findById(dto.getDeudaId())
                 .orElseThrow(() -> new RuntimeException("Deuda no encontrada con id: " + dto.getDeudaId()));
 
-        // Validaciones
+        // 2. Validaciones
         if (dto.getFechaPago().isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("La fecha de pago no puede ser futura");
         }
+
+        // 3. ACTUALIZA LA DEUDA
+        deuda.setEstado(com.rememberdebtscode.model.enums.EstadoDeuda.PAGADA);
+        deuda.setFechaPago(dto.getFechaPago());
+
+        // Si la deuda es recurrente: 
+        // - se deja en PAGADA, se actualiza fechaPago
+        // - el ciclo siguiente se renueva solo cuando llegue el primer día del nuevo periodo (ver paso 2 abajo)
+        // Así que NO cambias fechaLimitePago ni el estado aquí.
+
+        deudaRepository.save(deuda);
+
+        // 4. Crea la entidad pago desde DTO
         Pago pago = pagoMapper.toEntity(dto);
         pago.setDeuda(deuda);
+
+        // 5. Procesar comprobante
+        if (comprobante != null && !comprobante.isEmpty()) {
+            try {
+                String carpeta = "uploads/comprobantes/";
+                String nombreArchivo = System.currentTimeMillis() + "_" + comprobante.getOriginalFilename();
+                java.nio.file.Path ruta = java.nio.file.Paths.get(carpeta, nombreArchivo);
+                java.nio.file.Files.createDirectories(ruta.getParent());
+                comprobante.transferTo(ruta);
+                pago.setComprobanteUrl(nombreArchivo);
+            } catch (Exception ex) {
+                throw new RuntimeException("Error al guardar el comprobante: " + ex.getMessage(), ex);
+            }
+        }
 
         Pago saved = pagoRepository.save(pago);
         return pagoMapper.toDto(saved);

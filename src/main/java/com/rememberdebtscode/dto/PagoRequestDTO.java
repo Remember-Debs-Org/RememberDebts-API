@@ -20,4 +20,5 @@ public class PagoRequestDTO {
 
     @Size(max = 500, message = "Las notas deben tener máximo 500 caracteres")
     private String notas;
+
 }

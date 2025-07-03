@@ -6,9 +6,11 @@ import com.rememberdebtscode.service.AdminPagoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -38,12 +40,16 @@ public class AdminPagoController {
         return ResponseEntity.ok(pagos);
     }
 
-    @PostMapping
-    public ResponseEntity<PagoResponseDTO> createPago(@Valid @RequestBody PagoRequestDTO dto) {
-        PagoResponseDTO createdPago = adminPagoService.create(dto);
+    // --- CAMBIO PRINCIPAL: acepta multipart para comprobante ---
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PagoResponseDTO> createPago(
+            @RequestPart("pago") @Valid PagoRequestDTO dto,
+            @RequestPart(value = "comprobante", required = false) MultipartFile comprobante) {
+        PagoResponseDTO createdPago = adminPagoService.create(dto, comprobante);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPago);
     }
 
+    // Si decides no permitir actualizar ni borrar pagos, puedes comentar estos métodos.
     @PutMapping("/{id}")
     public ResponseEntity<PagoResponseDTO> updatePago(
             @PathVariable Integer id,

@@ -11,5 +11,6 @@ public class PagoResponseDTO {
     private LocalDate fechaPago;
     private Double montoPagado;
     private String notas;
+    private String comprobanteUrl;
     private LocalDate fechaRegistro;
 }
