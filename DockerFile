@@ -1,0 +1,26 @@
+# Usa la imagen oficial de OpenJDK 21 para Java
+FROM eclipse-temurin:21-jdk-alpine as build
+
+WORKDIR /app
+
+# Copia todo el proyecto
+COPY . .
+
+# Da permisos de ejecución a mvnw (por si acaso)
+RUN chmod +x mvnw
+
+# Empaqueta la app (esto genera el .jar)
+RUN ./mvnw clean package -DskipTests
+
+# --------- Fase de ejecución ---------
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+
+# Copia el jar ya compilado desde la fase build
+COPY --from=build /app/target/*.jar app.jar
+
+EXPOSE 8080
+
+# Comando de inicio
+ENTRYPOINT ["java", "-jar", "app.jar"]
