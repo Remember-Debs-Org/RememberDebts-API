@@ -44,13 +44,13 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 // 👇 Aquí pon solo /auth/login y /auth/register/usuario
                 .requestMatchers(
-                    "/auth/login",
-                    "/auth/register/usuario",
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/swagger-ui.html",
-                    "/webjars/**"
-                ).permitAll()
+    "/api/v1/auth/login",
+                "/api/v1/auth/register/usuario",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/swagger-ui.html",
+                "/webjars/**"
+            ).permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(AbstractHttpConfigurer::disable)
