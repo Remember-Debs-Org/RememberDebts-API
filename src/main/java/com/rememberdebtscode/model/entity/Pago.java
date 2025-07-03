@@ -31,6 +31,9 @@ public class Pago {
     @Column(name = "notas")
     private String notas;
 
+    @Column(name = "comprobante_url")
+    private String comprobanteUrl;
+
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDate fechaRegistro;
 

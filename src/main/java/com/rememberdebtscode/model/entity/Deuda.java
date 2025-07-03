@@ -25,11 +25,12 @@ public class Deuda {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Usuario user;
 
     @Column(name = "nombre", nullable = false)
     private String nombre;
 
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private CategoriaDeuda categoria;
@@ -40,8 +41,14 @@ public class Deuda {
     @Column(name = "monto", nullable = false)
     private Double monto;
 
-    @Column(name = "fecha_vencimiento", nullable = false)
-    private LocalDate fechaVencimiento;
+    @Column(name = "fecha_limite_pago")
+    private LocalDate fechaLimitePago;      // Para deudas pendientes
+
+    @Column(name = "fecha_pago")
+    private LocalDate fechaPago;            // Para deudas pagadas
+
+    @Column(name = "fecha_vencimiento")
+    private LocalDate fechaVencimiento;     // Para deudas vencidas
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
@@ -57,11 +64,11 @@ public class Deuda {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDate fechaCreacion;
 
-    @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Pago> pagos = new ArrayList<>();
-
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDate.now();
     }
+
+    @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Pago> pagos = new ArrayList<>();
 }
